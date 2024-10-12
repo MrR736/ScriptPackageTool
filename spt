@@ -1,0 +1,31 @@
+#!/bin/bash
+
+SCRIPT_PACKAGE_TOOL="/usr/scripts/ScriptPackageTool"
+
+case "$1" in
+    install)
+        $SCRIPT_PACKAGE_TOOL/InstallMgr $2
+        ;;
+    remove)
+        $SCRIPT_PACKAGE_TOOL/RemoveMgr $2
+        ;;
+    update)
+        $SCRIPT_PACKAGE_TOOL/UpdateMgr $2
+        ;;
+    search)
+        $SCRIPT_PACKAGE_TOOL/SearchMgr
+        ;;
+    *)
+        echo
+        echo "Script Package Tool V0.1 By MrR736 : 2024-10-12"
+        echo
+        echo "Usage: spt <Commands>"
+        echo
+        echo "<Commands>"
+        echo "  Install : Install Script Package"
+        echo "  Remove : Remove Script Package"
+        echo "  Search : Search Script Packages"
+        echo "  Update : Update Script Package"
+        echo "   -f : Update Full"
+        ;;
+esac

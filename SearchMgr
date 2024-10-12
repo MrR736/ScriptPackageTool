@@ -1,0 +1,30 @@
+#!/bin/bash
+
+SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+LISTS_DIR="$SCRIPTS_DIR/Lists"
+
+if [ "$(whoami)" != "root" ]
+then
+  echo "You have to run as Superuser!"
+  exit 1
+fi
+
+for cmd in curl ; do
+  if ! command -v "$cmd" &> /dev/null; then
+    echo "$cmd is missing!"
+    exit 1
+  fi
+done
+
+for list_file in "$LISTS_DIR"/*.list; do
+    if [[ -f "$list_file" ]]; then
+        while IFS= read -r line; do
+            if [[ $line == Search=* ]]; then
+                url="${line#Search=}"
+                curl -s "$url"
+            fi
+        done < "$list_file"
+    else
+        echo "E: No List Files Found in $LISTS_DIR."
+    fi
+done

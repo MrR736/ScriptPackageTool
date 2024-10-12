@@ -1,0 +1,137 @@
+#!/bin/bash
+
+SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+INSTALL_LISTS_DIR="$SCRIPTS_DIR/InstallLists"
+ZZ_BIN="/usr/scripts/bin/7zz"
+
+# Check if the script is run as root
+if [ "$(whoami)" != "root" ]; then
+    echo "You have to run as Superuser!"
+    exit 1
+fi
+
+# Check for required commands
+for cmd in chmod curl "$ZZ_BIN"; do
+    if ! command -v "$cmd" &> /dev/null; then
+        echo "$cmd is missing!"
+        exit 1
+    fi
+done
+
+case "$1" in
+    -f)
+        # Check for .list files
+        shopt -s nullglob  # Avoid issues with empty glob results
+        list_files=("$INSTALL_LISTS_DIR"/*.list)
+
+        if [[ ${#list_files[@]} -eq 0 ]]; then
+            echo "E: No List Files Found in $INSTALL_LISTS_DIR."
+            exit 1
+        fi
+
+        for list_file in "${list_files[@]}"; do
+            if [[ ! -s "$list_file" ]]; then
+                echo "E: List file $list_file is empty."
+                continue
+            fi
+
+            INSTALL_FILE=""
+            LATEST_INSTALL_FILE=""
+            COMMAND_NAME_FILE=""
+
+            while IFS= read -r line; do
+                case "$line" in
+                    VERSION=*)
+                        INSTALL_FILE="${line#VERSION=}"
+                        ;;
+                    LATEST_VERSION=*)
+                        LATEST_INSTALL_FILE="${line#LATEST_VERSION=}"
+                        ;;
+                    COMMAND_NAME=*)
+                        COMMAND_NAME_FILE="${line#COMMAND_NAME=}"
+                        ;;
+                esac
+            done < "$list_file"
+
+            # Fetch the latest version command
+            if [[ -n "$LATEST_INSTALL_FILE" ]]; then
+                LATEST_COMMAND_FILE=$($LATEST_INSTALL_FILE)
+                if [[ $? -ne 0 ]]; then
+                    echo "E: Failed to fetch latest version for $COMMAND_NAME_FILE."
+                    continue
+                fi
+            else
+                echo "E: LATEST_VERSION not specified for $COMMAND_NAME_FILE."
+                continue
+            fi
+
+            # Compare versions and decide on installation
+            if [[ "$INSTALL_FILE" < "$LATEST_COMMAND_FILE" ]]; then
+                echo "Installing $COMMAND_NAME_FILE..."
+                if ! $SCRIPTS_DIR/InstallMgr $COMMAND_NAME_FILE; then
+                    echo "E: Failed to install $COMMAND_NAME_FILE."
+                fi
+            else
+                echo "You are already using the latest version of $COMMAND_NAME_FILE: $INSTALL_FILE"
+            fi
+        done
+        ;;
+    *)
+        # Check for .list files
+        shopt -s nullglob  # Avoid issues with empty glob results
+        list_files=("$INSTALL_LISTS_DIR"/$1.list)
+
+        if [[ ${#list_files[@]} -eq 0 ]]; then
+            echo "E: No List Files Found in $INSTALL_LISTS_DIR."
+            exit 1
+        fi
+
+        for list_file in "${list_files[@]}"; do
+            if [[ ! -s "$list_file" ]]; then
+                echo "E: List file $list_file is empty."
+                continue
+            fi
+
+            INSTALL_FILE=""
+            LATEST_INSTALL_FILE=""
+            COMMAND_NAME_FILE=""
+
+            while IFS= read -r line; do
+                case "$line" in
+                    VERSION=*)
+                        INSTALL_FILE="${line#VERSION=}"
+                        ;;
+                    LATEST_VERSION=*)
+                        LATEST_INSTALL_FILE="${line#LATEST_VERSION=}"
+                        ;;
+                    COMMAND_NAME=*)
+                        COMMAND_NAME_FILE="${line#COMMAND_NAME=}"
+                        ;;
+                esac
+            done < "$list_file"
+
+            # Fetch the latest version command
+            if [[ -n "$LATEST_INSTALL_FILE" ]]; then
+                LATEST_COMMAND_FILE=$($LATEST_INSTALL_FILE)
+                if [[ $? -ne 0 ]]; then
+                    echo "E: Failed to fetch latest version for $COMMAND_NAME_FILE."
+                    continue
+                fi
+            else
+                echo "E: LATEST_VERSION not specified for $COMMAND_NAME_FILE."
+                continue
+            fi
+
+            # Compare versions and decide on installation
+            if [[ "$INSTALL_FILE" < "$LATEST_COMMAND_FILE" ]]; then
+                echo "Installing $COMMAND_NAME_FILE..."
+                if ! $SCRIPTS_DIR/InstallMgr $COMMAND_NAME_FILE; then
+                    echo "E: Failed to install $COMMAND_NAME_FILE."
+                fi
+            else
+                echo "You are already using the latest version of $COMMAND_NAME_FILE: $INSTALL_FILE"
+            fi
+        done
+        exit 1
+        ;;
+esac
