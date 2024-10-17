@@ -1,8 +1,8 @@
 #!/bin/bash
 
-COMMAND_NAME="Root Tools"
-SCRIPTS_BIN="/usr/bin/rt"
-SCRIPTS_FOLDER="/usr/scripts/RootTools"
+COMMAND_NAME="Script Package Tool"
+SCRIPTS_BIN="/usr/bin/spt"
+SCRIPTS_FOLDER="/usr/scripts/ScriptPackageTool"
 
 if [ "$(whoami)" != "root" ]
 then
