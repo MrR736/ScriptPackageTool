@@ -42,8 +42,6 @@ for list_file in "$LISTS_DIR"/*.list; do
                         else
                             echo "E: Failed to Extract Setup Package."
                         fi
-                    else
-                        echo "E: InstallMgr From Internet failed."
                     fi
                 fi
                 # Cleanup
