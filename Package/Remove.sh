@@ -1,5 +1,7 @@
 #!/bin/bash
 
+echo "[https://github.com/MrR736]"
+
 COMMAND_NAME="Script Package Tool"
 SCRIPTS_BIN="/usr/bin/spt"
 SCRIPTS_FOLDER="/usr/scripts/ScriptPackageTool"
