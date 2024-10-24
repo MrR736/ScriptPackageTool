@@ -2,55 +2,59 @@
 
 SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LISTS_DIR="$SCRIPTS_DIR/Lists"
-ZZ_BIN="/usr/scripts/bin/7zz"
+cd $SCRIPTS_DIR
+ZZ_BIN="../bin/7zz"
 
-if [ "$(whoami)" != "root" ]; then
-  echo "You have to run as Superuser!"
-  exit 1
-fi
-
-for cmd in wget curl rm "$ZZ_BIN"; do
+for cmd in wget curl exit rm chmod while cp  "$ZZ_BIN"; do
   if ! command -v "$cmd" &> /dev/null; then
-    echo "$cmd is missing!"
+    echo -e "\e[31mE: $cmd Is Not Installed.\e[0m"
     exit 1
   fi
 done
 
+if [ "$(whoami)" != "root" ]; then
+    echo -e "\e[31mE: You have to run as Superuser\e[0m"
+    exit 1
+fi
+
 if [ ! -d "$LISTS_DIR" ]; then
-  echo "E: Lists directory $LISTS_DIR does not exist."
+  echo -e "\e[31mE: Lists directory $LISTS_DIR does not exist.\e[0m"
   exit 1
 fi
 
 for list_file in "$LISTS_DIR"/*.list; do
     if [[ -f "$list_file" ]]; then
         if [[ ! -s "$list_file" ]]; then
-            echo "E: List file $list_file is empty."
+            echo -e "\e[31mE: List file $list_file is empty.\e[0m"
+            exit 1
             continue
         fi
         while IFS= read -r line; do
             if [[ $line == Install=* ]]; then
                 url="${line#Install=}"
-                if curl -s -o "$SCRIPTS_DIR/Mgr.sh" "$url"; then
-                    if bash "$SCRIPTS_DIR/Mgr.sh" "$1"; then
-                        echo "Extracting Setup Package..."
-                        if $ZZ_BIN x "$SCRIPTS_DIR/Downloads/Setup.zip" -o"$SCRIPTS_DIR/Setup" > /dev/null; then
-                            if "$SCRIPTS_DIR/Setup/Setup.sh"; then
-                                cp "$SCRIPTS_DIR/Setup/Remove.sh" "$SCRIPTS_DIR/Remove/$1" && chmod +x "$SCRIPTS_DIR/Remove/$1"
-                            else
-                                echo "E: Setup Package failed."
-                            fi
-                        else
-                            echo "E: Failed to Extract Setup Package."
-                        fi
-                    fi
-                fi
-                # Cleanup
-                rm -rf "$SCRIPTS_DIR/Mgr.sh"
-                rm -rf "$SCRIPTS_DIR/Setup"
-                rm -rf "$SCRIPTS_DIR/Downloads/Setup.zip"
             fi
         done < "$list_file"
     else
-        echo "E: No List Files Found in $LISTS_DIR."
+        echo -e "\e[31mE: No List Files Found in $LISTS_DIR.\e[0m"
+        exit 1
     fi
 done
+
+if ! curl -sSL "$url" | bash -s "$1"; then
+    exit 1
+fi
+
+if $ZZ_BIN x "$SCRIPTS_DIR/Downloads/Setup.zip" -o"$SCRIPTS_DIR/Setup" > /dev/null; then
+    if "$SCRIPTS_DIR/Setup/Setup.sh"; then
+        cp "$SCRIPTS_DIR/Setup/Remove.sh" "$SCRIPTS_DIR/Remove/$1"
+    else
+        echo -e "\e[31mE: Setup Package failed.\e[0m"
+        exit 1
+    fi
+else
+    echo -e "\e[31mE: Failed to Extract Setup Package.\e[0m"
+    rm -rf "$SCRIPTS_DIR/Setup" "$SCRIPTS_DIR/Downloads/Setup.zip"
+    exit 1
+fi
+
+rm -rf "$SCRIPTS_DIR/Setup" "$SCRIPTS_DIR/Downloads/Setup.zip"

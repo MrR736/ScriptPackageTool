@@ -3,18 +3,10 @@
 SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LISTS_DIR="$SCRIPTS_DIR/Lists"
 
-if [ "$(whoami)" != "root" ]
-then
-  echo "You have to run as Superuser!"
-  exit 1
-fi
-
-for cmd in curl ; do
-  if ! command -v "$cmd" &> /dev/null; then
-    echo "$cmd is missing!"
+if ! command -v curl &> /dev/null; then
+    echo -e "\e[31mE: curl Is Not Installed.\e[0m"
     exit 1
-  fi
-done
+fi
 
 for list_file in "$LISTS_DIR"/*.list; do
     if [[ -f "$list_file" ]]; then
@@ -25,6 +17,6 @@ for list_file in "$LISTS_DIR"/*.list; do
             fi
         done < "$list_file"
     else
-        echo "E: No List Files Found in $LISTS_DIR."
+        echo -e "\e[31mE: No List Files Found in $LISTS_DIR.\e[0m"
     fi
 done

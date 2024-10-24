@@ -1,21 +1,49 @@
 #!/bin/bash
 
 SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-LISTS_DIR="$SCRIPTS_DIR/Lists"
+InstallLists_DIR=$SCRIPTS_DIR/InstallLists
 
-if [ "$(whoami)" != "root" ]
-then
-  echo "You have to run as Superuser!"
-  exit 1
-fi
-
-for cmd in rm; do
+for cmd in rm case chmod for if; do
   if ! command -v "$cmd" &> /dev/null; then
-    echo "$cmd is missing!"
+    echo -e "\e[31mE: $cmd Is Not Installed.\e[0m"
     exit 1
   fi
 done
 
-$SCRIPTS_DIR/Remove/$1
-rm -rf "$SCRIPTS_DIR/Remove/$1"
-rm -rf "$SCRIPTS_DIR/InstallLists/$1.list"
+case "$1" in
+    -l)
+        echo -e "\e[31mLists\e[0m"
+        for list_file in "$InstallLists_DIR"/*.list; do
+             if [[ -f "$list_file" ]]; then
+                 if [[ ! -s "$list_file" ]]; then
+                     echo -e "\e[31mE: List file $list_file is empty.\e[0m"
+                     exit 1
+                     continue
+                 fi
+                 while IFS= read -r line; do
+                     if [[ $line == COMMAND_NAME=* ]]; then
+                         COMMAND_NAMES="${line#COMMAND_NAME=}"
+                         echo -e "\e[1;34m$COMMAND_NAMES\e[0m"
+                     fi
+                 done < "$list_file"
+             else
+                 echo -e "\e[31mE: No List Files Found in InstallLists.\e[0m"
+                 exit 1
+             fi
+        done
+        ;;
+    *)
+        if [ "$(whoami)" != "root" ]; then
+            echo -e "\e[31mE: You have to run as Superuser\e[0m"
+            exit 1
+        fi
+        if ! command -v $SCRIPTS_DIR/Remove/$1 &> /dev/null; then
+            echo -e "\e[31mE: Unable to Locate Package $1\e[0m"
+            exit 1
+        else
+            chmod +x "$SCRIPTS_DIR/Remove/$1"
+            $SCRIPTS_DIR/Remove/$1
+            rm -rf "$SCRIPTS_DIR/Remove/$1" "$SCRIPTS_DIR/InstallLists/$1.list"
+        fi
+        ;;
+esac
